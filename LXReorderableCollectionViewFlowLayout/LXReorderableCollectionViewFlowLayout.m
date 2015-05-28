@@ -25,11 +25,6 @@ typedef NS_ENUM(NSInteger, LXScrollingDirection) {
     LXScrollingDirectionRight
 };
 
-typedef NS_ENUM(NSUInteger, LXEditingMode) {
-    LXEditingModeNotEditing,
-    LXEditingModeEditing
-};
-
 static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
 static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
@@ -80,7 +75,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDataSource> dataSource;
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
 
-@property (assign, nonatomic) LXEditingMode editingMode;
+@property (assign, nonatomic, readwrite) LXEditingMode editingMode;
 
 @end
 
@@ -214,6 +209,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
         }
     }];
+    
+    [self invalidateLayout];
 }
 
 - (void)invalidatesScrollTimer {
