@@ -6,6 +6,7 @@
 //
 
 #import "LXReorderableCollectionViewFlowLayout.h"
+#import "LXReorderableCollectionViewLayoutAttributes.h"
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
@@ -22,6 +23,11 @@ typedef NS_ENUM(NSInteger, LXScrollingDirection) {
     LXScrollingDirectionDown,
     LXScrollingDirectionLeft,
     LXScrollingDirectionRight
+};
+
+typedef NS_ENUM(NSUInteger, LXEditingMode) {
+    LXEditingModeNotEditing,
+    LXEditingModeEditing
 };
 
 static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
@@ -74,11 +80,18 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDataSource> dataSource;
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
 
+@property (assign, nonatomic) LXEditingMode editingMode;
+
 @end
 
 @implementation LXReorderableCollectionViewFlowLayout
 
++ (Class) layoutAttributesClass {
+    return [LXReorderableCollectionViewLayoutAttributes class];
+}
+
 - (void)setDefaults {
+    _editingMode = LXEditingModeNotEditing;
     _scrollingSpeed = 300.0f;
     _scrollingTriggerEdgeInsets = UIEdgeInsetsMake(50.0f, 50.0f, 50.0f, 50.0f);
 }
@@ -298,6 +311,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (void)handleLongPressGesture:(UILongPressGestureRecognizer *)gestureRecognizer {
     switch(gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan: {
+            self.editingMode = LXEditingModeEditing;
+            
             NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:[gestureRecognizer locationInView:self.collectionView]];
             
             if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:)] &&
@@ -359,6 +374,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         } break;
         case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {
+            self.editingMode = LXEditingModeNotEditing;
+            
             NSIndexPath *currentIndexPath = self.selectedItemIndexPath;
             
             if (currentIndexPath) {
@@ -456,7 +473,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
     NSArray *layoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:rect];
     
-    for (UICollectionViewLayoutAttributes *layoutAttributes in layoutAttributesForElementsInRect) {
+    for (LXReorderableCollectionViewLayoutAttributes *layoutAttributes in layoutAttributesForElementsInRect) {
         switch (layoutAttributes.representedElementCategory) {
             case UICollectionElementCategoryCell: {
                 [self applyLayoutAttributes:layoutAttributes];
@@ -465,13 +482,15 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                 // Do nothing...
             } break;
         }
+        
+        layoutAttributes.editing = (self.editingMode == LXEditingModeEditing);
     }
     
     return layoutAttributesForElementsInRect;
 }
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewLayoutAttributes *layoutAttributes = [super layoutAttributesForItemAtIndexPath:indexPath];
+    LXReorderableCollectionViewLayoutAttributes *layoutAttributes = (LXReorderableCollectionViewLayoutAttributes*) [super layoutAttributesForItemAtIndexPath:indexPath];
     
     switch (layoutAttributes.representedElementCategory) {
         case UICollectionElementCategoryCell: {
@@ -481,6 +500,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             // Do nothing...
         } break;
     }
+
+    layoutAttributes.editing = (self.editingMode == LXEditingModeEditing);
     
     return layoutAttributes;
 }
