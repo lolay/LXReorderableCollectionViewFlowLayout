@@ -72,8 +72,6 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 @property (strong, nonatomic) CADisplayLink *displayLink;
 
-@property (assign, nonatomic, readwrite) BOOL editing;
-
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDataSource> dataSource;
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
 
@@ -83,6 +81,11 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 + (Class) layoutAttributesClass {
     return [LXReorderableCollectionViewLayoutAttributes class];
+}
+
+- (void) setEditing:(BOOL) editing {
+    _editing = editing;
+    [self invalidateLayout];
 }
 
 - (void)setDefaults {
@@ -307,7 +310,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (void)handleLongPressGesture:(UILongPressGestureRecognizer *)gestureRecognizer {
     switch(gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan: {
-            self.editing = YES;
+            _editing = YES;
             
             NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:[gestureRecognizer locationInView:self.collectionView]];
             
