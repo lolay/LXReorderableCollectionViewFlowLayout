@@ -72,10 +72,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 @property (strong, nonatomic) CADisplayLink *displayLink;
 
+@property (assign, nonatomic, readwrite) BOOL editing;
+
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDataSource> dataSource;
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
-
-@property (assign, nonatomic, readwrite) LXEditingMode editingMode;
 
 @end
 
@@ -86,7 +86,6 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 - (void)setDefaults {
-    _editingMode = LXEditingModeNotEditing;
     _scrollingSpeed = 300.0f;
     _scrollingTriggerEdgeInsets = UIEdgeInsetsMake(50.0f, 50.0f, 50.0f, 50.0f);
 }
@@ -308,7 +307,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (void)handleLongPressGesture:(UILongPressGestureRecognizer *)gestureRecognizer {
     switch(gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan: {
-            self.editingMode = LXEditingModeEditing;
+            self.editing = YES;
             
             NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:[gestureRecognizer locationInView:self.collectionView]];
             
@@ -371,8 +370,6 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         } break;
         case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {
-            self.editingMode = LXEditingModeNotEditing;
-            
             NSIndexPath *currentIndexPath = self.selectedItemIndexPath;
             
             if (currentIndexPath) {
@@ -480,7 +477,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             } break;
         }
         
-        layoutAttributes.editing = (self.editingMode == LXEditingModeEditing);
+        layoutAttributes.editing = self.editing;
     }
     
     return layoutAttributesForElementsInRect;
@@ -498,7 +495,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         } break;
     }
 
-    layoutAttributes.editing = (self.editingMode == LXEditingModeEditing);
+    layoutAttributes.editing = self.editing;
     
     return layoutAttributes;
 }
